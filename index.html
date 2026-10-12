@@ -1,0 +1,1235 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="description" content="CAKE: a benchmark of 188 expert-validated questions on cloud-native software architecture, evaluated on 22 LLM configurations.">
+<style>
+  /* Base reset that the claude.ai artifact host otherwise injects. */
+  :root { color-scheme: light; padding-top: env(safe-area-inset-top, 0px); padding-bottom: env(safe-area-inset-bottom, 0px); }
+  body { margin: 0; }
+  img { max-width: 100%; }
+  [hidden] { display: none !important; }
+</style>
+<title>CAKE Benchmark</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400..800&family=JetBrains+Mono:wght@400;500;600&family=Source+Sans+3:ital,wght@0,400;0,600;0,700;1,400&display=swap">
+<style>
+/* Layout: one reading column (680px) inside a 1080px frame; figures break out to the full frame. Hero pairs the wordmark with a four-tier "cake" of Bloom levels. */
+:root {
+  --bg: #F3F4F7;
+  --surface: #FFFFFF;
+  --ink: #12141A;
+  --muted: #586073;
+  --rule: #DCDFE6;
+  --soft: #E8EAF0;
+  --accent: #C8325F;
+  --on-accent: #FFFFFF;
+  --qwen: #3563D6;
+  --llama: #10907A;
+  --mistral: #D2720C;
+  --gpt: #6A6F7C;
+  --f-display: "Bricolage Grotesque", "Avenir Next", "Segoe UI", system-ui, sans-serif;
+  --f-body: "Source Sans 3", "Segoe UI", system-ui, -apple-system, sans-serif;
+  --f-mono: "JetBrains Mono", ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+  --step--1: 0.8125rem;
+  --step-0: 1.0625rem;
+  --step-1: 1.25rem;
+  --step-2: 1.625rem;
+  --step-3: clamp(1.75rem, 1.2rem + 2vw, 2.375rem);
+  --radius: 10px;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #0E1014; --surface: #161920; --ink: #E9EBF1; --muted: #9AA1B1; --rule: #2B2F39; --soft: #1F232B;
+    --accent: #FF6E98; --on-accent: #1B0710;
+    --qwen: #7398FF; --llama: #38C7A8; --mistral: #F4A443; --gpt: #A4A9B6;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #0E1014; --surface: #161920; --ink: #E9EBF1; --muted: #9AA1B1; --rule: #2B2F39; --soft: #1F232B;
+  --accent: #FF6E98; --on-accent: #1B0710;
+  --qwen: #7398FF; --llama: #38C7A8; --mistral: #F4A443; --gpt: #A4A9B6;
+  color-scheme: dark;
+}
+
+* { box-sizing: border-box; }
+html { scroll-behavior: smooth; scroll-padding-top: 72px; }
+body {
+  background: var(--bg); color: var(--ink);
+  font-family: var(--f-body); font-size: var(--step-0); line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
+}
+a { color: inherit; text-decoration-color: color-mix(in oklab, var(--accent) 60%, transparent); text-underline-offset: 3px; }
+a:hover { color: var(--accent); }
+:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; border-radius: 4px; }
+h1, h2, h3 { font-family: var(--f-display); text-wrap: balance; margin: 0; line-height: 1.12; }
+h2 { font-size: var(--step-3); font-weight: 700; letter-spacing: -0.015em; }
+h3 { font-size: var(--step-1); font-weight: 650; letter-spacing: -0.005em; }
+p { margin: 0; }
+.mono { font-family: var(--f-mono); }
+.num { font-variant-numeric: tabular-nums; }
+
+.wrap { max-width: 1080px; margin: 0 auto; padding-inline: 20px; }
+.prose { max-width: 680px; }
+.prose > * + * { margin-top: 1em; }
+
+/* nav */
+.nav {
+  position: sticky; top: env(safe-area-inset-top, 0px); z-index: 20;
+  background: color-mix(in oklab, var(--bg) 88%, transparent);
+  backdrop-filter: saturate(1.4) blur(10px); -webkit-backdrop-filter: saturate(1.4) blur(10px);
+  border-bottom: 1px solid var(--rule);
+}
+.nav .wrap { display: flex; align-items: center; gap: 20px; height: 52px; }
+.nav .brand { font-family: var(--f-display); font-weight: 800; font-size: 1.15rem; letter-spacing: -0.02em; text-decoration: none; flex: none; }
+.nav .links { display: flex; gap: 4px; overflow-x: auto; scrollbar-width: none; min-width: 0; }
+.nav .links::-webkit-scrollbar { display: none; }
+.nav .links a {
+  font-family: var(--f-mono); font-size: 0.75rem; text-decoration: none; color: var(--muted);
+  padding: 6px 9px; border-radius: 6px; white-space: nowrap;
+}
+.nav .links a:hover { color: var(--ink); background: var(--soft); }
+
+/* hero */
+.hero { padding-block: 56px 28px; }
+.hero-grid { display: grid; grid-template-columns: minmax(0, 1.25fr) minmax(0, 1fr); gap: 48px; align-items: center; }
+.eyebrow {
+  font-family: var(--f-mono); font-size: 0.75rem; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted);
+}
+.wordmark {
+  font-family: var(--f-display); font-weight: 800; font-size: clamp(4.5rem, 3rem + 9vw, 9.5rem);
+  letter-spacing: -0.055em; line-height: 0.86; margin-top: 14px;
+  font-variation-settings: "opsz" 96;
+}
+.wordmark span { color: var(--accent); }
+.subtitle { font-family: var(--f-display); font-size: var(--step-2); font-weight: 500; line-height: 1.2; margin-top: 14px; letter-spacing: -0.01em; max-width: 22em; }
+.authors { margin-top: 20px; color: var(--ink); font-size: 0.98rem; }
+.authors .aff { color: var(--muted); display: block; font-size: 0.9rem; }
+.btns { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 22px; }
+.btn {
+  display: inline-flex; align-items: center; gap: 8px; text-decoration: none;
+  font-family: var(--f-mono); font-size: 0.8rem; font-weight: 500;
+  padding: 9px 14px; border-radius: 8px; border: 1px solid var(--rule); background: var(--surface); color: var(--ink);
+}
+.btn:hover { border-color: var(--ink); color: var(--ink); }
+.btn.primary { background: var(--ink); color: var(--bg); border-color: var(--ink); }
+.btn.primary:hover { background: var(--accent); border-color: var(--accent); color: var(--on-accent); }
+.btn svg { width: 14px; height: 14px; }
+
+.tldr {
+  margin-top: 40px; display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 16px;
+  border-top: 2px solid var(--ink); padding-top: 16px; max-width: 860px;
+}
+.tldr b { font-family: var(--f-mono); font-size: 0.75rem; letter-spacing: 0.08em; text-transform: uppercase; padding-top: 4px; }
+.tldr p { font-size: var(--step-1); line-height: 1.45; }
+
+/* cake */
+.cake { display: grid; gap: 6px; justify-items: center; }
+.tier { display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; gap: 12px; width: 100%; }
+.tier .bar {
+  height: 46px; border-radius: 6px 6px 2px 2px; display: flex; overflow: hidden;
+  box-shadow: inset 0 -3px 0 color-mix(in oklab, var(--ink) 18%, transparent);
+}
+.tier .bar i { display: block; height: 100%; }
+.tier .bar i.mcq { background: var(--tc); }
+.tier .bar i.fr { background: repeating-linear-gradient(135deg, var(--tc) 0 5px, color-mix(in oklab, var(--tc) 55%, var(--bg)) 5px 9px); }
+.tier .lab { font-family: var(--f-display); font-weight: 650; font-size: 1rem; text-align: right; }
+.tier .cnt { font-family: var(--f-mono); font-size: 0.78rem; color: var(--muted); }
+.tier .cnt b { color: var(--ink); font-weight: 600; font-size: 0.95rem; }
+.plate { width: 100%; height: 6px; border-radius: 3px; background: var(--ink); margin-top: 2px; }
+.cake-key { display: flex; gap: 16px; justify-content: center; margin-top: 12px; font-family: var(--f-mono); font-size: 0.72rem; color: var(--muted); flex-wrap: wrap; }
+.cake-key span { display: inline-flex; align-items: center; gap: 6px; }
+.sw { width: 14px; height: 10px; border-radius: 2px; display: inline-block; }
+.sw.solid { background: var(--accent); }
+.sw.hatch { background: repeating-linear-gradient(135deg, var(--accent) 0 3px, color-mix(in oklab, var(--accent) 45%, var(--bg)) 3px 6px); }
+.cake-cap { text-align: center; font-size: 0.85rem; color: var(--muted); margin-top: 6px; }
+
+/* stats */
+.stats { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 0; margin-top: 36px; border-top: 1px solid var(--rule); border-bottom: 1px solid var(--rule); }
+.stat { padding: 18px 18px 18px 0; }
+.stat + .stat { padding-left: 18px; border-left: 1px solid var(--rule); }
+.stat .v { font-family: var(--f-display); font-weight: 700; font-size: clamp(1.9rem, 1.4rem + 1.6vw, 2.6rem); letter-spacing: -0.03em; line-height: 1; font-variant-numeric: tabular-nums; }
+.stat .v small { font-size: 0.5em; color: var(--muted); font-weight: 500; letter-spacing: 0; }
+.stat .k { font-size: 0.9rem; color: var(--muted); margin-top: 6px; line-height: 1.35; }
+
+/* sections */
+section.block { padding-block: 72px 8px; }
+.sec-head { display: grid; gap: 12px; margin-bottom: 28px; }
+.sec-head .lede { color: var(--muted); font-size: var(--step-0); max-width: 680px; }
+
+.figure {
+  background: var(--surface); border: 1px solid var(--rule); border-radius: var(--radius);
+  padding: 22px; margin-top: 8px;
+}
+.fig-top { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px 20px; margin-bottom: 16px; }
+.fig-title { font-family: var(--f-display); font-weight: 650; font-size: 1.05rem; }
+.caption { font-size: 0.88rem; color: var(--muted); margin-top: 14px; max-width: 760px; line-height: 1.5; }
+.caption b { color: var(--ink); font-weight: 600; }
+
+.seg { display: inline-flex; background: var(--soft); border-radius: 8px; padding: 3px; gap: 2px; flex-wrap: wrap; }
+.seg button {
+  font-family: var(--f-mono); font-size: 0.75rem; border: 0; background: transparent; color: var(--muted);
+  padding: 6px 11px; border-radius: 6px; cursor: pointer;
+}
+.seg button:hover { color: var(--ink); }
+.seg button[aria-pressed="true"] { background: var(--surface); color: var(--ink); box-shadow: 0 1px 2px color-mix(in oklab, var(--ink) 18%, transparent); }
+
+.legend { display: flex; flex-wrap: wrap; gap: 6px; }
+.chip {
+  display: inline-flex; align-items: center; gap: 7px; font-family: var(--f-mono); font-size: 0.75rem;
+  border: 1px solid var(--rule); background: var(--surface); color: var(--ink);
+  border-radius: 999px; padding: 4px 10px 4px 8px; cursor: pointer;
+}
+.chip i { width: 9px; height: 9px; border-radius: 50%; background: var(--fc); display: inline-block; }
+.chip[aria-pressed="false"] { opacity: 0.45; }
+.chip[aria-pressed="false"] i { background: transparent; box-shadow: inset 0 0 0 1.5px var(--fc); }
+
+/* svg charts */
+svg.chart { width: 100%; height: auto; display: block; overflow: visible; }
+svg.chart text { font-family: var(--f-mono); font-size: 11px; fill: var(--muted); }
+svg.chart .grid line { stroke: var(--rule); stroke-width: 1; }
+svg.chart .axis-title { fill: var(--ink); font-size: 11.5px; }
+svg.chart .pt { transition: opacity .15s, r .15s; }
+svg.chart .pt.dim, svg.chart .fam-line.dim { opacity: 0.12; }
+svg.chart .pt.hl { stroke: var(--ink); stroke-width: 2; }
+svg.chart .band { fill: var(--accent); opacity: 0.1; }
+svg.chart .band-label { fill: var(--accent); font-weight: 600; }
+.twin { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 28px; }
+.twin h4 { margin: 0 0 6px; font-family: var(--f-display); font-weight: 650; font-size: 1rem; }
+.twin h4 span { font-family: var(--f-mono); font-size: 0.72rem; color: var(--muted); font-weight: 400; margin-left: 6px; }
+
+.tip {
+  position: fixed; z-index: 50; pointer-events: none; background: var(--ink); color: var(--bg);
+  font-family: var(--f-mono); font-size: 0.75rem; line-height: 1.45; padding: 8px 10px; border-radius: 7px;
+  max-width: 260px; transform: translate(12px, 12px);
+}
+.tip b { font-family: var(--f-body); font-size: 0.85rem; font-weight: 700; }
+
+/* findings */
+.findings { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0; border-top: 1px solid var(--rule); }
+.finding { padding: 22px 26px 24px 0; border-bottom: 1px solid var(--rule); display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 4px 16px; }
+.finding:nth-child(even) { padding-left: 26px; padding-right: 0; border-left: 1px solid var(--rule); }
+.finding .n { font-family: var(--f-display); font-weight: 800; font-size: 2rem; line-height: 1; color: var(--accent); grid-row: span 2; }
+.finding h3 { font-size: 1.15rem; }
+.finding p { color: var(--muted); font-size: 0.98rem; }
+
+/* topic x level grid */
+.bench-grid { display: grid; grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr); gap: 28px; align-items: start; }
+.tbl-wrap { overflow-x: auto; }
+table { border-collapse: collapse; width: 100%; }
+.dist th, .dist td { font-family: var(--f-mono); font-size: 0.8rem; text-align: center; padding: 0; }
+.dist thead th { color: var(--muted); font-weight: 500; padding: 0 0 8px; font-size: 0.72rem; letter-spacing: 0.04em; text-transform: uppercase; }
+.dist tbody th { text-align: left; font-family: var(--f-body); font-size: 0.92rem; font-weight: 600; padding-right: 12px; white-space: nowrap; }
+.dist td .c {
+  margin: 2px; height: 40px; border-radius: 5px; display: grid; place-items: center; font-variant-numeric: tabular-nums;
+  transition: background .25s;
+}
+.dist td.tot, .dist tfoot td { color: var(--muted); font-size: 0.78rem; }
+.dist tfoot td { padding-top: 8px; }
+.sources { display: grid; gap: 14px; }
+.sources ul { list-style: none; padding: 0; margin: 0; display: grid; gap: 6px; }
+.sources li { font-size: 0.95rem; padding-left: 16px; position: relative; }
+.sources li::before { content: ""; position: absolute; left: 0; top: 0.62em; width: 7px; height: 7px; background: var(--accent); border-radius: 2px; }
+.kv { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 6px 14px; font-size: 0.95rem; }
+.kv dt { font-family: var(--f-mono); font-size: 0.78rem; color: var(--muted); padding-top: 2px; }
+.kv dd { margin: 0; }
+
+/* quiz */
+.quiz { display: grid; grid-template-columns: minmax(0, 1fr); gap: 16px; }
+.q-meta { display: flex; flex-wrap: wrap; gap: 8px; font-family: var(--f-mono); font-size: 0.72rem; color: var(--muted); }
+.q-meta span { border: 1px solid var(--rule); border-radius: 999px; padding: 2px 9px; }
+.q-text { font-family: var(--f-display); font-size: var(--step-1); font-weight: 550; line-height: 1.35; max-width: 760px; }
+.opts { display: grid; gap: 8px; max-width: 760px; }
+.opt {
+  text-align: left; font: inherit; font-size: 1rem; color: var(--ink); background: var(--bg);
+  border: 1px solid var(--rule); border-radius: 8px; padding: 12px 14px; cursor: pointer;
+  display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 12px; align-items: start;
+}
+.opt:hover:not(:disabled) { border-color: var(--ink); }
+.opt .l { font-family: var(--f-mono); font-size: 0.78rem; color: var(--muted); padding-top: 2px; }
+.opt.right { border-color: var(--llama); background: color-mix(in oklab, var(--llama) 12%, var(--surface)); }
+.opt.wrong { border-color: var(--accent); background: color-mix(in oklab, var(--accent) 10%, var(--surface)); }
+.opt:disabled { cursor: default; }
+.q-foot { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; }
+.ghost { font-family: var(--f-mono); font-size: 0.78rem; background: transparent; color: var(--ink); border: 1px solid var(--rule); border-radius: 7px; padding: 7px 12px; cursor: pointer; }
+.ghost:hover { border-color: var(--ink); }
+.reveal { max-width: 760px; border-left: 3px solid var(--accent); padding: 4px 0 4px 16px; display: grid; gap: 8px; }
+.reveal p { font-size: 0.98rem; }
+.reveal .note { font-size: 0.88rem; color: var(--muted); }
+pre.code {
+  background: var(--soft); border-radius: 8px; padding: 14px 16px; overflow-x: auto; margin: 0;
+  font-family: var(--f-mono); font-size: 0.8rem; line-height: 1.55; max-width: 760px;
+}
+
+/* pipeline */
+.pipe { display: grid; grid-template-columns: minmax(0, 1fr) 28px minmax(0, 1fr) 28px minmax(0, 1.6fr); align-items: stretch; gap: 0; }
+.pipe .arrow { display: grid; place-items: center; color: var(--muted); }
+.pipe .arrow svg { width: 18px; height: 18px; }
+.node { border: 1px solid var(--rule); border-radius: 8px; padding: 14px 16px; background: var(--bg); display: grid; gap: 6px; align-content: start; }
+.node .t { font-family: var(--f-mono); font-size: 0.7rem; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); }
+.node h3 { font-size: 1.05rem; }
+.node p { font-size: 0.92rem; color: var(--muted); line-height: 1.45; }
+.lanes { display: grid; gap: 10px; }
+.lane { border: 1px solid var(--rule); border-radius: 8px; padding: 12px 14px; background: var(--bg); display: grid; gap: 8px; }
+.lane .steps { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; font-size: 0.9rem; }
+.lane .steps span.s { background: var(--surface); border: 1px solid var(--rule); border-radius: 6px; padding: 3px 8px; }
+.lane .steps span.a { color: var(--muted); font-family: var(--f-mono); font-size: 0.8rem; }
+.modes { display: flex; flex-wrap: wrap; gap: 6px; }
+.modes span { font-family: var(--f-mono); font-size: 0.72rem; border-radius: 5px; padding: 2px 7px; background: var(--soft); }
+.extract { margin-top: 14px; font-size: 0.9rem; color: var(--muted); display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
+.extract .s { font-family: var(--f-mono); font-size: 0.74rem; color: var(--ink); border: 1px dashed var(--rule); border-radius: 5px; padding: 2px 7px; }
+
+/* leaderboard */
+.lb th, .lb td { padding: 9px 10px; border-bottom: 1px solid var(--rule); text-align: left; font-size: 0.92rem; white-space: nowrap; }
+.lb thead th { font-family: var(--f-mono); font-size: 0.72rem; font-weight: 500; color: var(--muted); text-transform: uppercase; letter-spacing: 0.05em; border-bottom: 1px solid var(--ink); }
+.lb thead th button { all: unset; cursor: pointer; display: inline-flex; gap: 4px; align-items: center; }
+.lb thead th button:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; border-radius: 3px; }
+.lb thead th[aria-sort] button { color: var(--ink); }
+.lb td.r, .lb th.r { text-align: right; }
+.lb .name { display: inline-flex; gap: 8px; align-items: center; font-weight: 600; }
+.lb .name i { width: 9px; height: 9px; border-radius: 50%; background: var(--fc); flex: none; }
+.lb .cfg { font-family: var(--f-mono); font-size: 0.75rem; color: var(--muted); }
+.lb .cfg.aug { color: var(--ink); }
+.lb .barcell { display: grid; grid-template-columns: 40px minmax(60px, 140px); gap: 10px; align-items: center; justify-content: end; font-variant-numeric: tabular-nums; font-family: var(--f-mono); font-size: 0.86rem; font-weight: 600; }
+.lb td.fr-col { width: 40%; }
+.lb td.muted { color: var(--muted); }
+.lb td:first-child, .lb th:first-child { position: sticky; left: 0; background: var(--surface); z-index: 1; }
+.lb .barcell .track { height: 6px; background: var(--soft); border-radius: 3px; overflow: hidden; }
+.lb .barcell .track i { display: block; height: 100%; background: var(--fc); border-radius: 3px; }
+.lb .mono { font-size: 0.82rem; font-variant-numeric: tabular-nums; }
+.lb tbody tr:hover td { background: color-mix(in oklab, var(--soft) 60%, var(--surface)); }
+#res-tabs { margin-bottom: 4px; }
+.rpanel { min-width: 0; }
+
+/* ranked bars */
+.ranked { position: relative; }
+.rrow {
+  position: absolute; left: 0; right: 0; height: 26px; display: grid; grid-template-columns: 11rem minmax(0, 1fr) 3rem; gap: 10px; align-items: center;
+  transition: transform .55s cubic-bezier(.2,.7,.2,1);
+}
+.rrow .nm { font-size: 0.88rem; text-align: right; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.rrow .nm em { font-style: normal; font-family: var(--f-mono); font-size: 0.72rem; color: var(--muted); }
+.rrow .tr { height: 16px; background: var(--soft); border-radius: 3px; position: relative; overflow: hidden; }
+.rrow .tr i { position: absolute; inset: 0 auto 0 0; background: var(--fc); border-radius: 3px; transition: width .55s cubic-bezier(.2,.7,.2,1); }
+.rrow.tool .tr i { background: repeating-linear-gradient(135deg, var(--fc) 0 4px, color-mix(in oklab, var(--fc) 40%, var(--surface)) 4px 7px); }
+.rrow .vl { font-family: var(--f-mono); font-size: 0.8rem; font-variant-numeric: tabular-nums; }
+.rrow .rk { font-family: var(--f-mono); font-size: 0.7rem; color: var(--muted); margin-right: 6px; }
+.range-note { font-family: var(--f-mono); font-size: 0.78rem; color: var(--muted); }
+.range-note b { color: var(--accent); font-weight: 600; }
+
+/* augmentation */
+.aug { display: grid; grid-template-columns: 11rem minmax(0, 1fr) minmax(0, 1fr); gap: 8px 18px; align-items: center; }
+.aug .hd { font-family: var(--f-mono); font-size: 0.72rem; color: var(--muted); text-transform: uppercase; letter-spacing: 0.05em; text-align: center; padding-bottom: 4px; }
+.aug .nm { font-size: 0.9rem; text-align: right; }
+.aug .nm em { font-style: normal; font-family: var(--f-mono); font-size: 0.74rem; color: var(--ink); background: var(--soft); border-radius: 4px; padding: 1px 5px; margin-left: 4px; }
+.aug .sep { grid-column: 1 / -1; height: 1px; background: var(--rule); margin: 4px 0; }
+.dv { position: relative; height: 22px; }
+.dv::before { content: ""; position: absolute; left: 50%; top: -4px; bottom: -4px; width: 1px; background: var(--ink); opacity: 0.5; }
+.dv i { position: absolute; top: 3px; height: 16px; background: var(--fc); border-radius: 2px; }
+.dv.tool i { background: repeating-linear-gradient(135deg, var(--fc) 0 4px, color-mix(in oklab, var(--fc) 40%, var(--surface)) 4px 7px); }
+.dv span { position: absolute; top: 1px; font-family: var(--f-mono); font-size: 0.75rem; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.aug .scale { font-family: var(--f-mono); font-size: 0.68rem; color: var(--muted); display: flex; justify-content: space-between; }
+
+
+/* heatmap */
+.heat th, .heat td { padding: 0; font-family: var(--f-mono); font-size: 0.78rem; }
+.heat thead th { font-weight: 500; color: var(--muted); padding: 0 2px 8px; font-size: 0.7rem; text-align: center; vertical-align: bottom; line-height: 1.25; text-transform: uppercase; letter-spacing: 0.03em; }
+.heat tbody th { text-align: right; font-family: var(--f-body); font-weight: 500; font-size: 0.86rem; padding-right: 12px; white-space: nowrap; }
+.heat td .c { margin: 1.5px; height: 28px; min-width: 56px; border-radius: 4px; display: grid; place-items: center; font-variant-numeric: tabular-nums; transition: background .25s, color .25s; }
+.heat tr.gap td, .heat tr.gap th { height: 10px; }
+.heat .fam { font-family: var(--f-mono); font-size: 0.68rem; color: var(--muted); text-transform: uppercase; letter-spacing: 0.06em; text-align: left; padding: 0 0 2px; }
+.heat-scale { display: flex; align-items: center; gap: 8px; font-family: var(--f-mono); font-size: 0.72rem; color: var(--muted); }
+.heat-scale .ramp { width: 140px; height: 10px; border-radius: 3px; background: linear-gradient(90deg, var(--surface), var(--accent)); border: 1px solid var(--rule); }
+
+/* reliability */
+.rel { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px; }
+.panel { background: var(--surface); border: 1px solid var(--rule); border-radius: var(--radius); padding: 20px; display: grid; gap: 12px; align-content: start; }
+.panel .t { font-family: var(--f-mono); font-size: 0.7rem; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); }
+.panel p { font-size: 0.95rem; color: var(--muted); }
+.panel p b { color: var(--ink); }
+.hbar { display: grid; grid-template-columns: 7.5rem minmax(0, 1fr) 3.4rem; gap: 10px; align-items: center; font-size: 0.9rem; }
+.hbar .tr { height: 14px; background: var(--soft); border-radius: 3px; overflow: hidden; }
+.hbar .tr i { display: block; height: 100%; background: var(--ink); border-radius: 3px; }
+.hbar .tr i.acc { background: var(--accent); }
+.hbar .v { font-family: var(--f-mono); font-size: 0.82rem; text-align: right; font-variant-numeric: tabular-nums; }
+.dots { font-family: var(--f-mono); letter-spacing: 1px; color: var(--ink); }
+.dots .o { color: var(--muted); }
+.big { font-family: var(--f-display); font-weight: 700; font-size: 2.2rem; letter-spacing: -0.03em; line-height: 1; font-variant-numeric: tabular-nums; }
+.big small { font-size: 0.45em; color: var(--muted); font-weight: 500; letter-spacing: 0; }
+
+/* limits */
+.limits { list-style: none; counter-reset: lim; padding: 0; margin: 0; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0 32px; }
+.limits li { counter-increment: lim; padding: 14px 0 14px 40px; border-bottom: 1px solid var(--rule); position: relative; font-size: 0.96rem; color: var(--muted); }
+.limits li::before { content: counter(lim); position: absolute; left: 0; top: 12px; font-family: var(--f-display); font-weight: 800; font-size: 1.3rem; color: var(--ink); }
+.limits li b { color: var(--ink); font-weight: 600; display: block; }
+
+/* cite */
+.cite { position: relative; }
+.cite pre { background: var(--surface); border: 1px solid var(--rule); border-radius: var(--radius); padding: 18px 20px; overflow-x: auto; font-family: var(--f-mono); font-size: 0.8rem; line-height: 1.6; margin: 0; }
+.cite .ghost { position: absolute; top: 10px; right: 10px; background: var(--surface); }
+footer { padding-block: 56px 48px; color: var(--muted); font-size: 0.88rem; }
+footer .wrap { display: flex; flex-wrap: wrap; gap: 8px 24px; justify-content: space-between; border-top: 1px solid var(--rule); padding-top: 20px; }
+
+/* responsive */
+@media (max-width: 880px) {
+  .hero-grid, .bench-grid { grid-template-columns: minmax(0, 1fr); gap: 36px; }
+  .twin { grid-template-columns: minmax(0, 1fr); }
+  .pipe { grid-template-columns: minmax(0, 1fr); }
+  .pipe .arrow { height: 28px; transform: rotate(90deg); }
+  .rel { grid-template-columns: minmax(0, 1fr); }
+}
+@media (max-width: 720px) {
+  .stats { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .stat:nth-child(3) { padding-left: 0; border-left: 0; }
+  .stat:nth-child(n+3) { border-top: 1px solid var(--rule); }
+  .findings, .limits { grid-template-columns: minmax(0, 1fr); }
+  .lb th, .lb td { padding: 8px 7px; font-size: 0.86rem; }
+  .lb .barcell { grid-template-columns: 36px 56px; gap: 6px; }
+  .finding, .finding:nth-child(even) { padding: 18px 0; border-left: 0; }
+  .rrow { grid-template-columns: 8.4rem minmax(0, 1fr) 2.6rem; gap: 8px; }
+  .rrow .rk { display: none; }
+  .aug { grid-template-columns: 6.8rem minmax(0, 1fr) minmax(0, 1fr); gap: 8px 10px; }
+  .aug .nm { font-size: 0.8rem; }
+  .figure { padding: 16px; }
+  .tldr { grid-template-columns: minmax(0, 1fr); gap: 6px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  html { scroll-behavior: auto; }
+  *, *::before, *::after { transition: none !important; animation: none !important; }
+}
+</style>
+
+</head>
+<body>
+<nav class="nav" aria-label="Sections">
+  <div class="wrap">
+    <a class="brand" href="#top">CAKE</a>
+    <div class="links">
+      <a href="#findings">Findings</a>
+      <a href="#benchmark">Benchmark</a>
+      <a href="#try">Try a question</a>
+      <a href="#results">Results</a>
+      <a href="#cite">Cite</a>
+    </div>
+  </div>
+</nav>
+
+<header class="hero" id="top">
+  <div class="wrap">
+    <div class="hero-grid">
+      <div>
+        <div class="eyebrow">arXiv 2604.05755 · cs.SE · April 2026</div>
+        <h1 class="wordmark" aria-label="CAKE">CAKE<span>.</span></h1>
+        <p class="subtitle">Cloud Architecture Knowledge Evaluation of Large Language Models</p>
+        <p class="authors">
+          Tim Lukas Adam, Phongsakon Mark Konrad, Riccardo Terrenzi, Florian Girardo Lukas, Rahime Yilmaz, Krzysztof Sierszecki, Serkan Ayvaz
+          <span class="aff">Centre for Industrial Software, University of Southern Denmark</span>
+        </p>
+        <div class="btns">
+          <a class="btn primary" href="https://arxiv.org/abs/2604.05755" target="_blank" rel="noopener">
+            <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><path d="M4 1.5h5.5L13 5v9.5H4z"/><path d="M9.5 1.5V5H13"/></svg>Paper on arXiv</a>
+          <a class="btn" href="https://arxiv.org/pdf/2604.05755" target="_blank" rel="noopener">PDF</a>
+          <a class="btn" href="https://github.com/timadam03/CAKE-benchmark" target="_blank" rel="noopener">
+            <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><ellipse cx="8" cy="4" rx="5.5" ry="2"/><path d="M2.5 4v8c0 1.1 2.5 2 5.5 2s5.5-.9 5.5-2V4"/><path d="M2.5 8c0 1.1 2.5 2 5.5 2s5.5-.9 5.5-2"/></svg>Dataset</a>
+        </div>
+      </div>
+
+      <figure style="margin:0" aria-label="Question counts per Bloom level">
+        <div class="cake" id="cake"></div>
+        <div class="plate" aria-hidden="true"></div>
+        <div class="cake-key"><span><i class="sw solid"></i>multiple choice</span><span><i class="sw hatch"></i>free response</span></div>
+        <figcaption class="cake-cap">188 questions, layered by Bloom's revised taxonomy</figcaption>
+      </figure>
+    </div>
+
+    <div class="tldr">
+      <b>TL;DR</b>
+      <p>Once a model passes about 3B parameters, it answers multiple-choice questions on cloud-native architecture almost perfectly. Ask it to analyze, design or implement in its own words, and large differences between models come back.</p>
+    </div>
+
+    <div class="stats">
+      <div class="stat"><div class="v num">188</div><div class="k">expert-validated questions, 5 topics, 4 cognitive levels</div></div>
+      <div class="stat"><div class="v num">22</div><div class="k">model configurations, 0.5B to 70B parameters, 4 families</div></div>
+      <div class="stat"><div class="v num">99.2<small>%</small></div><div class="k">best multiple-choice accuracy, reached by 5 configurations</div></div>
+      <div class="stat"><div class="v num">4.52<small> / 5</small></div><div class="k">best free-response score, GPT-5-Mini</div></div>
+    </div>
+  </div>
+</header>
+
+<main>
+  <section class="block" style="padding-top:40px" aria-labelledby="thesis-h">
+    <div class="wrap">
+      <div class="figure">
+        <div class="fig-top">
+          <div>
+            <div class="eyebrow">Headline result</div>
+            <h2 id="thesis-h" style="font-size:var(--step-2);margin-top:6px">Same models, two formats, two different pictures</h2>
+          </div>
+          <div class="legend" id="legend-twin"></div>
+        </div>
+        <div class="twin">
+          <div><h4>Multiple choice <span>accuracy, 0 to 100%</span></h4><svg class="chart" id="twin-mcq" role="img" aria-label="MCQ accuracy versus parameter count"></svg></div>
+          <div><h4>Free response <span>judge score, 0 to 5</span></h4><svg class="chart" id="twin-fr" role="img" aria-label="Free-response score versus parameter count"></svg></div>
+        </div>
+        <p class="caption">Base models plotted against parameter count (log scale). Both y-axes span their full scale, so the shaded bands compare directly. Among base models with at least 3B parameters, plus the two GPT models, multiple-choice accuracy spans <b>5.4 pp</b> (5% of the scale). Free-response scores span <b>1.66 points</b> (33% of the scale). GPT models run through OpenRouter with no published size, so they appear as dashed lines. Hover a point to see the model in both panels. Data: Table II; spread computed from it.</p>
+      </div>
+    </div>
+  </section>
+
+  <section class="block" id="findings" aria-labelledby="findings-h">
+    <div class="wrap">
+      <div class="sec-head">
+        <div class="eyebrow">Findings</div>
+        <h2 id="findings-h">Four results from 22 configurations</h2>
+      </div>
+      <div class="findings">
+        <div class="finding"><div class="n">1</div><h3>Multiple choice saturates above 3B</h3><p>16 of 22 configurations exceed 90%. Past 3B, each size step adds only 1 to 3 points. The best models reach 99.2%.</p></div>
+        <div class="finding"><div class="n">2</div><h3>Free response keeps scaling</h3><p>Judge scores rise with size at every cognitive level, from 1.71 to 4.52 overall. Implement-level questions separate models the most, 1.36 to 4.54.</p></div>
+        <div class="finding"><div class="n">3</div><h3>The two formats measure different things</h3><p>Mid-size models (3B to 8B) often pick the right option but struggle to explain the architecture behind it. Multiple-choice accuracy alone overstates what a model can do.</p></div>
+        <div class="finding"><div class="n">4</div><h3>Augmentation depends on size</h3><p>Chain-of-thought (+think) lifts free-response quality by 0.15 to 0.42. Web-search tools (+tool) hurt models below about 8B parameters.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <section class="block" id="benchmark" aria-labelledby="bench-h">
+    <div class="wrap">
+      <div class="sec-head">
+        <div class="eyebrow">The benchmark</div>
+        <h2 id="bench-h">188 questions across five topics and four levels of thinking</h2>
+        <p class="lede">CAKE covers microservices, containers, orchestration and managed cloud services. Its levels follow Bloom's revised taxonomy: recall a fact, analyze a situation, design a system, implement it in code. Implement-level knowledge is tested only through free response.</p>
+      </div>
+      <div class="bench-grid">
+        <div class="figure">
+          <div class="fig-top">
+            <div class="fig-title">Questions per topic and level</div>
+            <div class="seg" role="group" aria-label="Benchmark variant">
+              <button type="button" data-v="full" aria-pressed="true">Full · 188</button>
+              <button type="button" data-v="core" aria-pressed="false">Core · 116</button>
+            </div>
+          </div>
+          <div class="tbl-wrap"><table class="dist" id="dist"></table></div>
+          <p class="caption" id="dist-cap"></p>
+        </div>
+        <div class="sources">
+          <div class="figure" style="margin:0">
+            <div class="fig-title" style="margin-bottom:10px">Where the concepts come from</div>
+            <p style="font-size:0.95rem;color:var(--muted);margin-bottom:12px">85 core concepts drawn from practitioner references, including:</p>
+            <ul>
+              <li>AWS Well-Architected Framework</li>
+              <li>microservices.io</li>
+              <li>Azure Architecture Patterns</li>
+              <li>Kubernetes Enhancement Proposals</li>
+            </ul>
+          </div>
+          <div class="figure" style="margin:0">
+            <div class="fig-title" style="margin-bottom:12px">How the questions were built</div>
+            <dl class="kv">
+              <dt>Generate</dt><dd>Claude Opus 4.5 wrote 200 candidates from a template per topic and level, with manual review between batches.</dd>
+              <dt>Validate</dt><dd>Four domain experts rated clarity, correctness and difficulty from 1 to 5. 658 annotations in total.</dd>
+              <dt>Filter</dt><dd>12 implement-level MCQs were dropped for a formatting defect, leaving 188. CAKE-Core keeps the 116 that every expert rated clearly and correctly, with no flags.</dd>
+            </dl>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="block" id="try" aria-labelledby="try-h">
+    <div class="wrap">
+      <div class="sec-head">
+        <div class="eyebrow">Try a question</div>
+        <h2 id="try-h">Answer what the models answered</h2>
+        <p class="lede">Four real questions from CAKE-Core, one per level. Options are shuffled each time, as in the benchmark, where every MCQ is asked three times in a different order.</p>
+      </div>
+      <div class="figure">
+        <div class="fig-top">
+          <div class="seg" role="group" aria-label="Cognitive level" id="quiz-tabs"></div>
+          <button type="button" class="ghost" id="quiz-shuffle">Shuffle options</button>
+        </div>
+        <div class="quiz" id="quiz"></div>
+      </div>
+    </div>
+  </section>
+
+  <section class="block" id="scoring" aria-labelledby="scoring-h">
+    <div class="wrap">
+      <div class="sec-head">
+        <div class="eyebrow">Scoring</div>
+        <h2 id="scoring-h">Majority vote for options, an LLM judge for written answers</h2>
+        <p class="lede">All models run at temperature 0. Local models run on Ollama; GPT models run through OpenRouter. Provider modules share one interface, so a model can be swapped without touching the evaluation logic.</p>
+      </div>
+      <div class="figure">
+        <div class="pipe">
+          <div class="node">
+            <span class="t">Input</span>
+            <h3>188 questions</h3>
+            <p>130 multiple choice, 58 free response, each tagged with topic and level.</p>
+          </div>
+          <div class="arrow" aria-hidden="true"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M2 8h11M9 4l4 4-4 4"/></svg></div>
+          <div class="node">
+            <span class="t">22 configurations</span>
+            <h3>Three execution modes</h3>
+            <div class="modes"><span>base</span><span>+think</span><span>+tool</span></div>
+            <p><b style="color:var(--ink)">base</b> answers directly. <b style="color:var(--ink)">+think</b> adds a reasoning preamble and raises the token limit from 256 to 2048. <b style="color:var(--ink)">+tool</b> gives the model web search and browsing.</p>
+          </div>
+          <div class="arrow" aria-hidden="true"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M2 8h11M9 4l4 4-4 4"/></svg></div>
+          <div class="lanes">
+            <div class="lane">
+              <span class="t eyebrow" style="font-size:0.7rem">Multiple choice</span>
+              <div class="steps"><span class="s">Ask 3 times, options shuffled</span><span class="a">→</span><span class="s">Majority answer</span><span class="a">→</span><span class="s">Accuracy + conviction</span></div>
+              <p style="font-size:0.88rem;color:var(--muted)">Conviction is the share of runs that agree with the majority: <span class="dots">●●●</span> 1.0 or <span class="dots">●●<span class="o">○</span></span> 2/3.</p>
+            </div>
+            <div class="lane">
+              <span class="t eyebrow" style="font-size:0.7rem">Free response</span>
+              <div class="steps"><span class="s">Question + rubric + answer</span><span class="a">→</span><span class="s">DeepSeek-R1:32B judge</span><span class="a">→</span><span class="s">Score 0 to 5</span></div>
+              <p style="font-size:0.88rem;color:var(--muted)">One deterministic judge, chosen for stable scores across runs.</p>
+            </div>
+          </div>
+        </div>
+        <div class="extract">Answer extraction tries, in order:
+          <span class="s">explicit pattern</span>→<span class="s">strip &lt;think&gt; tags</span>→<span class="s">JSON parse</span>→<span class="s">regex</span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="block" id="results" aria-labelledby="results-h">
+    <div class="wrap">
+      <div class="sec-head">
+        <div class="eyebrow">Results</div>
+        <h2 id="results-h">All 22 configurations</h2>
+        <p class="lede">Mistral leads the local models at every size. Mistral 3B outscores the larger Qwen 7B and Llama 3 8B on free response, which suggests training data matters as much as parameter count.</p>
+      </div>
+      <div class="figure">
+        <div class="fig-top">
+          <div class="seg" role="group" aria-label="Results view" id="res-tabs">
+            <button type="button" data-p="p-table" aria-pressed="true">Leaderboard</button>
+            <button type="button" data-p="p-levels" aria-pressed="false">By level</button>
+            <button type="button" data-p="p-aug" aria-pressed="false">+think / +tool</button>
+            <button type="button" data-p="p-topics" aria-pressed="false">By topic</button>
+            <button type="button" data-p="p-speed" aria-pressed="false">Speed</button>
+          </div>
+        </div>
+
+        <div class="rpanel" id="p-table">
+          <div class="tbl-wrap"><table class="lb" id="lb"></table></div>
+          <p class="caption">FR is the mean judge score across analyze, design and implement. MCQ is the three-run majority accuracy. Time is seconds per question. Click a column to sort. Data: Table II.</p>
+        </div>
+
+        <div class="rpanel" id="p-levels" hidden>
+          <div class="fig-top">
+            <div class="seg" role="group" aria-label="Cognitive level" id="level-tabs"></div>
+            <div class="range-note" id="level-range"></div>
+          </div>
+          <div class="ranked" id="ranked"></div>
+          <p class="caption">Free-response score ranked within each level. Mistral 14B and GPT-5-Mini hold the top two places throughout, but the order below them changes, so the levels measure different skills. Implement spreads models furthest apart. Striped bars are +tool. Level scores are read from Fig. 3 at one decimal; Overall comes from Table II.</p>
+        </div>
+
+        <div class="rpanel" id="p-aug" hidden>
+          <div class="aug" id="aug"></div>
+          <p class="caption">Change from each variant's own base model (Llama 3.1 8B +tool against Llama 3 8B, as in the paper). <b>+think</b> lifts free response in three of four cases, but Mistral 3B drops 13.1 points on MCQ, likely from reasoning itself out of correct answers. <b>+tool</b> hurts below about 8B: small models make malformed tool calls or loop on searches. Striped bars are +tool. Computed from Table II.</p>
+        </div>
+
+        <div class="rpanel" id="p-topics" hidden>
+          <div class="fig-top">
+            <div class="seg" role="group" aria-label="Format" id="heat-tabs">
+              <button type="button" data-f="fr" aria-pressed="true">Free-response score</button>
+              <button type="button" data-f="mcq" aria-pressed="false">MCQ accuracy</button>
+            </div>
+            <div class="heat-scale"><span id="heat-lo">0</span><span class="ramp" aria-hidden="true"></span><span id="heat-hi">5</span></div>
+          </div>
+          <div class="tbl-wrap"><table class="heat" id="heat"></table></div>
+          <p class="caption">Small models know quality-attribute vocabulary better than patterns such as CQRS, saga or sidecar. Above 3B, MCQ scores converge near the top on every topic. Technical debt has only 6 questions; from the value steps, its cells rest on 5 MCQ items and 1 free-response item. Data: Fig. 7.</p>
+        </div>
+
+        <div class="rpanel" id="p-speed" hidden>
+          <div class="legend" style="font-family:var(--f-mono);font-size:0.72rem;color:var(--muted);gap:14px;margin-bottom:8px">
+            <span>● base</span><span>○ +think</span><span>□ +tool</span>
+          </div>
+          <svg class="chart" id="speed" role="img" aria-label="Free-response score versus seconds per question"></svg>
+          <p class="caption"><b>Mistral 14B</b> scores 4.33 at 2.4 s per question, close to GPT-5-Mini's 4.52 at 10.0 s. <b>Mistral 3B</b> (1.3 s, 3.54) beats Llama 3.2 3B +think (4.9 s, 3.01). Time on a log scale; the y-axis starts at 1.5.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="block" id="reliability" aria-labelledby="rel-h">
+    <div class="wrap">
+      <div class="sec-head">
+        <div class="eyebrow">Reliability</div>
+        <h2 id="rel-h">Can the scores be trusted?</h2>
+      </div>
+      <div class="rel">
+        <div class="panel">
+          <span class="t">Conviction</span>
+          <div class="hbar"><span><span class="dots">●●●</span> unanimous</span><span class="tr"><i class="acc" style="width:89.5%"></i></span><span class="v">89.5%</span></div>
+          <div class="hbar"><span><span class="dots">●●<span class="o">○</span></span> split 2/3</span><span class="tr"><i style="width:55%"></i></span><span class="v">55.0%</span></div>
+          <p>Unanimous answers are far more accurate than split ones, a <b>34.5-point gap</b>. An assistant could send low-conviction answers to a human.</p>
+        </div>
+        <div class="panel">
+          <span class="t">Expert ratings · n = 658</span>
+          <div class="hbar"><span>Clarity</span><span class="tr"><i style="width:94.4%"></i></span><span class="v">4.72</span></div>
+          <div class="hbar"><span>Correctness</span><span class="tr"><i style="width:92.6%"></i></span><span class="v">4.63</span></div>
+          <div class="hbar"><span>Difficulty fit</span><span class="tr"><i style="width:86.6%"></i></span><span class="v">4.33</span></div>
+          <p>Mean out of 5. Experts agreed within one point on <b>91.3%</b> of clarity pairs.</p>
+        </div>
+        <div class="panel">
+          <span class="t">CAKE-Core vs Full</span>
+          <svg class="chart" id="core" role="img" aria-label="MCQ accuracy change from Full to Core for each configuration"></svg>
+          <p>Scoring only the 94 cleanest MCQs moves every model by <b>less than 4 points</b> and keeps the ranking. Data: Fig. 5.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="block" id="limits" aria-labelledby="limits-h">
+    <div class="wrap">
+      <div class="sec-head">
+        <div class="eyebrow">Limitations</div>
+        <h2 id="limits-h">Six limits the paper names</h2>
+      </div>
+      <ol class="limits">
+        <li><b>Scope</b>CAKE targets cloud-native architecture. Results may not carry over to classical patterns.</li>
+        <li><b>Distractor quality</b>Experts found elaboration bias in some wrong options. Shuffling handles position bias, and CAKE-Core filters the weakest items.</li>
+        <li><b>Excluded implement MCQs</b>12 implement-level MCQs were dropped for a formatting defect, leaving 130 MCQs.</li>
+        <li><b>One judge</b>Free response relies on DeepSeek-R1:32B, partly cross-checked with Gemini 2.5 Pro.</li>
+        <li><b>Inter-rater reliability</b>α near zero is a known artifact of skewed ratings. Future rounds should use wider scales.</li>
+        <li><b>Longest option wins</b>The correct option is often the longest one, which a model could exploit. Future rounds should control distractor length.</li>
+      </ol>
+      <p class="prose" style="margin-top:24px;color:var(--muted)">Future work adds correctly formatted implement-level MCQs, classical architecture patterns, a study of augmentation strategies by model size, and multilingual versions.</p>
+    </div>
+  </section>
+
+  <section class="block" id="cite" aria-labelledby="cite-h">
+    <div class="wrap">
+      <div class="sec-head">
+        <div class="eyebrow">Cite</div>
+        <h2 id="cite-h">BibTeX</h2>
+      </div>
+      <div class="cite">
+        <pre id="bib">@misc{adam2026cake,
+  title         = {CAKE: Cloud Architecture Knowledge Evaluation of Large Language Models},
+  author        = {Adam, Tim Lukas and Konrad, Phongsakon Mark and Terrenzi, Riccardo and
+                   Lukas, Florian Girardo and Yilmaz, Rahime and Sierszecki, Krzysztof and
+                   Ayvaz, Serkan},
+  year          = {2026},
+  eprint        = {2604.05755},
+  archivePrefix = {arXiv},
+  primaryClass  = {cs.SE},
+  doi           = {10.48550/arXiv.2604.05755}
+}</pre>
+        <button type="button" class="ghost" id="copy-bib">Copy</button>
+      </div>
+    </div>
+  </section>
+</main>
+
+<footer>
+  <div class="wrap">
+    <span>CAKE · Centre for Industrial Software, University of Southern Denmark</span>
+    <span><a href="https://arxiv.org/abs/2604.05755" target="_blank" rel="noopener">arXiv</a> · <a href="https://github.com/timadam03/CAKE-benchmark" target="_blank" rel="noopener">github.com/timadam03/CAKE-benchmark</a></span>
+  </div>
+</footer>
+
+<div class="tip" id="tip" hidden></div>
+
+<script>
+(function () {
+  const FAMC = { Qwen: "var(--qwen)", Llama: "var(--llama)", Mistral: "var(--mistral)", GPT: "var(--gpt)" };
+  const FAMS = ["Qwen", "Llama", "Mistral", "GPT"];
+
+  // Table II (mcq, fr, t) and Fig. 3 per-level judge scores (an, de, im).
+  const M = [
+    { id: "q05", name: "Qwen 2.5 0.5B", short: "Qwen 0.5B", fam: "Qwen", cfg: "base", p: 0.5, mcq: 47.7, fr: 1.99, t: 1.2, an: 2.0, de: 2.1, im: 1.8 },
+    { id: "q15", name: "Qwen 2.5 1.5B", short: "Qwen 1.5B", fam: "Qwen", cfg: "base", p: 1.5, mcq: 91.5, fr: 2.71, t: 1.0, an: 2.8, de: 2.6, im: 2.8 },
+    { id: "q3", name: "Qwen 2.5 3B", short: "Qwen 3B", fam: "Qwen", cfg: "base", p: 3, mcq: 95.4, fr: 3.06, t: 0.9, an: 3.2, de: 2.6, im: 3.4 },
+    { id: "q7", name: "Qwen 2.5 7B", short: "Qwen 7B", fam: "Qwen", cfg: "base", p: 7, mcq: 96.9, fr: 3.02, t: 1.1, an: 3.0, de: 2.5, im: 3.6 },
+    { id: "q14", name: "Qwen 2.5 14B", short: "Qwen 14B", fam: "Qwen", cfg: "base", p: 14, mcq: 97.7, fr: 3.36, t: 1.5, an: 3.8, de: 2.7, im: 3.6 },
+    { id: "qc30", name: "Qwen3-Coder 30B", short: "Qwen3-Coder 30B", fam: "Qwen", cfg: "base", p: 30, mcq: 99.2, fr: 4.04, t: 1.8, an: 4.0, de: 3.8, im: 4.3 },
+    { id: "l1", name: "Llama 3.2 1B", short: "Llama 3.2 1B", fam: "Llama", cfg: "base", p: 1, mcq: 37.7, fr: 2.38, t: 1.0, an: 2.5, de: 2.2, im: 2.5 },
+    { id: "l1t", name: "Llama 3.2 1B", short: "Llama 3.2 1B", fam: "Llama", cfg: "+think", p: 1, mcq: 76.2, fr: 2.76, t: 4.4, an: 3.2, de: 2.4, im: 2.7 },
+    { id: "l1x", name: "Llama 3.2 1B", short: "Llama 3.2 1B", fam: "Llama", cfg: "+tool", p: 1, mcq: 13.8, fr: 1.71, t: 2.5, an: 2.2, de: 1.3, im: 1.6 },
+    { id: "l3", name: "Llama 3.2 3B", short: "Llama 3.2 3B", fam: "Llama", cfg: "base", p: 3, mcq: 93.8, fr: 2.86, t: 1.3, an: 3.2, de: 2.5, im: 2.8 },
+    { id: "l3t", name: "Llama 3.2 3B", short: "Llama 3.2 3B", fam: "Llama", cfg: "+think", p: 3, mcq: 93.8, fr: 3.01, t: 4.9, an: 3.2, de: 2.6, im: 3.2 },
+    { id: "l3x", name: "Llama 3.2 3B", short: "Llama 3.2 3B", fam: "Llama", cfg: "+tool", p: 3, mcq: 40.8, fr: 1.75, t: 2.5, an: 2.2, de: 1.6, im: 1.4 },
+    { id: "l8", name: "Llama 3 8B", short: "Llama 3 8B", fam: "Llama", cfg: "base", p: 8, mcq: 93.8, fr: 2.96, t: 1.2, an: 3.2, de: 2.3, im: 3.3 },
+    { id: "l8t", name: "Llama 3 8B", short: "Llama 3 8B", fam: "Llama", cfg: "+think", p: 8, mcq: 95.4, fr: 2.94, t: 6.3, an: 3.0, de: 2.4, im: 3.4 },
+    { id: "l8x", name: "Llama 3.1 8B", short: "Llama 3.1 8B", fam: "Llama", cfg: "+tool", p: 8, mcq: 91.5, fr: 2.85, t: 8.8, an: 2.8, de: 2.7, im: 3.1 },
+    { id: "l70", name: "Llama 3.3 70B", short: "Llama 3.3 70B", fam: "Llama", cfg: "base", p: 70, mcq: 99.2, fr: 3.47, t: 3.7, an: 3.5, de: 2.9, im: 4.0 },
+    { id: "m3", name: "Mistral 3.1 3B", short: "Mistral 3B", fam: "Mistral", cfg: "base", p: 3, mcq: 96.9, fr: 3.54, t: 1.3, an: 3.0, de: 3.7, im: 3.9 },
+    { id: "m3t", name: "Mistral 3.1 3B", short: "Mistral 3B", fam: "Mistral", cfg: "+think", p: 3, mcq: 83.8, fr: 3.96, t: 8.6, an: 4.0, de: 3.9, im: 4.0 },
+    { id: "m8", name: "Mistral 3.1 8B", short: "Mistral 8B", fam: "Mistral", cfg: "base", p: 8, mcq: 98.5, fr: 4.08, t: 1.7, an: 4.0, de: 4.0, im: 4.3 },
+    { id: "m14", name: "Mistral 3.1 14B", short: "Mistral 14B", fam: "Mistral", cfg: "base", p: 14, mcq: 99.2, fr: 4.33, t: 2.4, an: 4.5, de: 4.0, im: 4.5 },
+    { id: "g4o", name: "GPT-4o-Mini", short: "GPT-4o-Mini", fam: "GPT", cfg: "base", p: null, mcq: 99.2, fr: 3.77, t: 1.9, an: 4.0, de: 3.2, im: 4.1 },
+    { id: "g5", name: "GPT-5-Mini", short: "GPT-5-Mini", fam: "GPT", cfg: "base", p: null, mcq: 99.2, fr: 4.52, t: 10.0, an: 4.8, de: 4.3, im: 4.5 }
+  ];
+  // Fig. 7: per-topic MCQ (%) and FR (0-5); topics: patterns, quality, decomposition, cloud deploy, tech debt.
+  const TOPIC = {
+    q05: [[43, 68, 39, 43, 0], [2.0, 2.0, 2.0, 1.9, 2.0]],
+    q15: [[86, 95, 96, 96, 80], [2.7, 2.5, 2.7, 2.7, 4.0]],
+    q3: [[95, 97, 96, 100, 60], [2.9, 3.3, 3.1, 3.0, 2.0]],
+    q7: [[93, 97, 100, 100, 100], [2.9, 3.7, 3.4, 3.0, 2.0]],
+    q14: [[95, 100, 100, 100, 80], [3.2, 2.7, 3.7, 3.0, 4.0]],
+    qc30: [[100, 100, 100, 100, 80], [4.0, 4.2, 4.1, 4.2, 4.0]],
+    l1: [[31, 38, 39, 48, 40], [2.3, 2.5, 2.6, 2.1, 2.0]],
+    l1t: [[79, 78, 83, 74, 20], [2.6, 2.7, 2.7, 2.5, 2.0]],
+    l1x: [[5, 24, 17, 9, 20], [1.1, 2.7, 1.4, 1.9, 2.0]],
+    l3: [[93, 97, 100, 96, 40], [2.6, 2.8, 3.1, 2.6, 3.0]],
+    l3t: [[93, 97, 96, 96, 60], [2.9, 3.2, 3.2, 2.8, 2.0]],
+    l3x: [[38, 38, 52, 43, 20], [1.0, 2.0, 2.4, 1.9, 2.0]],
+    l8: [[86, 100, 96, 96, 100], [2.8, 3.2, 3.0, 2.9, 2.0]],
+    l8t: [[90, 97, 100, 100, 80], [2.8, 3.2, 3.2, 2.9, 4.0]],
+    l8x: [[95, 89, 91, 96, 60], [2.8, 3.0, 3.3, 2.9, 2.0]],
+    l70: [[100, 100, 100, 100, 80], [3.6, 3.5, 3.6, 3.1, 4.0]],
+    m3: [[95, 97, 100, 100, 80], [4.0, 3.3, 4.0, 3.6, 0.0]],
+    m3t: [[71, 84, 91, 100, 80], [3.8, 4.2, 4.0, 4.2, 2.0]],
+    m8: [[95, 100, 100, 100, 100], [4.2, 4.7, 4.0, 3.8, 4.0]],
+    m14: [[98, 100, 100, 100, 100], [4.2, 4.5, 4.4, 4.2, 4.0]],
+    g4o: [[100, 100, 100, 100, 80], [3.5, 4.2, 3.9, 3.7, 4.0]],
+    g5: [[100, 100, 100, 100, 80], [4.6, 3.8, 4.6, 4.2, 4.0]]
+  };
+  // Fig. 5: Core minus Full MCQ accuracy (pp).
+  const CORE = { q05: 0.2, q15: -1.1, q3: 0.4, q7: -0.1, q14: 0.2, qc30: -0.3, l1: 3.8, l1t: 2.6, l1x: -1.1, l3: 3.0, l3t: 1.9, l3x: -3.5, l8: 1.9, l8t: 0.4, l8x: 2.1, l70: -0.3, m3: -0.1, m3t: -1.9, m8: 0.5, m14: 0.8, g4o: -0.3, g5: -0.3 };
+
+  const byId = Object.fromEntries(M.map(m => [m.id, m]));
+  const label = m => m.cfg === "base" ? m.short : m.short + " " + m.cfg;
+  const NS = "http://www.w3.org/2000/svg";
+  function s(tag, attrs, parent) {
+    const e = document.createElementNS(NS, tag);
+    for (const k in attrs) e.setAttribute(k, attrs[k]);
+    if (parent) parent.appendChild(e);
+    return e;
+  }
+  function h(tag, attrs, html) {
+    const e = document.createElement(tag);
+    if (attrs) for (const k in attrs) e.setAttribute(k, attrs[k]);
+    if (html != null) e.innerHTML = html;
+    return e;
+  }
+  function pressGroup(group, btn) {
+    group.querySelectorAll("button").forEach(b => b.setAttribute("aria-pressed", String(b === btn)));
+  }
+
+  // tooltip
+  const tip = document.getElementById("tip");
+  function showTip(evt, html) {
+    tip.innerHTML = html; tip.hidden = false; moveTip(evt);
+  }
+  function moveTip(evt) {
+    const x = Math.min(evt.clientX, window.innerWidth - 280);
+    tip.style.left = x + "px"; tip.style.top = evt.clientY + "px";
+  }
+  function hideTip() { tip.hidden = true; }
+  function modelTip(m) {
+    return `<b>${label(m)}</b><br>${m.fam}${m.p ? " · " + m.p + "B" : ""}<br>MCQ ${m.mcq.toFixed(1)}% · FR ${m.fr.toFixed(2)}<br>${m.t.toFixed(1)} s / question`;
+  }
+
+  // hero cake: Bloom tiers, widths proportional to question count
+  const TIERS = [
+    { l: "Implement", mcq: 0, fr: 28, c: 100 },
+    { l: "Design", mcq: 24, fr: 26, c: 78 },
+    { l: "Analyze", mcq: 56, fr: 4, c: 56 },
+    { l: "Recall", mcq: 50, fr: 0, c: 36 }
+  ];
+  const cake = document.getElementById("cake");
+  TIERS.forEach(t => {
+    const n = t.mcq + t.fr;
+    const row = h("div", { class: "tier" });
+    const tc = `color-mix(in oklab, var(--accent) ${t.c}%, var(--soft))`;
+    row.innerHTML = `<span class="lab">${t.l}</span>
+      <span class="bar" style="width:${(n / 60) * 15}rem;max-width:52vw;--tc:${tc}" title="${t.mcq} MCQ, ${t.fr} free response">
+        ${t.mcq ? `<i class="mcq" style="width:${(t.mcq / n) * 100}%"></i>` : ""}${t.fr ? `<i class="fr" style="width:${(t.fr / n) * 100}%"></i>` : ""}
+      </span>
+      <span class="cnt"><b>${n}</b> ${t.fr && t.mcq ? `${t.mcq}+${t.fr}` : t.fr ? "FR only" : "MCQ only"}</span>`;
+    cake.appendChild(row);
+  });
+
+  // twin chart
+  const twinWrap = document.querySelector(".twin");
+  const hiddenFams = new Set();
+  function buildLegend(el, onChange) {
+    FAMS.forEach(f => {
+      const b = h("button", { type: "button", class: "chip", "aria-pressed": "true", style: `--fc:${FAMC[f]}` }, `<i></i>${f}`);
+      b.addEventListener("click", () => {
+        const on = b.getAttribute("aria-pressed") === "true";
+        b.setAttribute("aria-pressed", String(!on));
+        on ? hiddenFams.add(f) : hiddenFams.delete(f);
+        onChange();
+      });
+      el.appendChild(b);
+    });
+  }
+  function applyFamFilter() {
+    twinWrap.querySelectorAll("[data-fam]").forEach(e => e.classList.toggle("dim", hiddenFams.has(e.dataset.fam)));
+  }
+  function highlight(id, on) {
+    twinWrap.querySelectorAll(`.pt[data-id="${id}"]`).forEach(e => { e.classList.toggle("hl", on); e.setAttribute("r", on ? 7 : 5); });
+  }
+
+  function twin(svgId, key, max, ticks, fmt, band) {
+    const W = 460, H = 320, ml = 40, mr = 14, mt = 24, mb = 42;
+    const svg = document.getElementById(svgId);
+    svg.setAttribute("viewBox", `0 0 ${W} ${H}`);
+    const lx0 = Math.log(0.4), lx1 = Math.log(100);
+    const x = p => ml + (Math.log(p) - lx0) / (lx1 - lx0) * (W - ml - mr);
+    const y = v => mt + (1 - v / max) * (H - mt - mb);
+    const g = s("g", { class: "grid" }, svg);
+    ticks.forEach(v => {
+      s("line", { x1: ml, x2: W - mr, y1: y(v), y2: y(v) }, g);
+      s("text", { x: ml - 8, y: y(v) + 4, "text-anchor": "end" }, svg).textContent = fmt(v);
+    });
+    [0.5, 1, 3, 8, 14, 30, 70].forEach(p => {
+      s("text", { x: x(p), y: H - mb + 18, "text-anchor": "middle" }, svg).textContent = p + "B";
+    });
+    s("text", { x: (ml + W - mr) / 2, y: H - 6, "text-anchor": "middle", class: "axis-title" }, svg).textContent = "Parameters (log scale)";
+    // spread band
+    s("rect", { class: "band", x: ml, width: W - ml - mr, y: y(band[1]), height: Math.max(2, y(band[0]) - y(band[1])) }, svg);
+    s("text", { class: "band-label", x: W - mr - 4, y: y(band[0]) + 14, "text-anchor": "end" }, svg).textContent = band[2];
+    // GPT baselines
+    const gpts = M.filter(m => m.fam === "GPT");
+    const seen = {};
+    gpts.forEach(m => {
+      s("line", { x1: ml, x2: W - mr, y1: y(m[key]), y2: y(m[key]), "data-fam": "GPT", class: "fam-line", style: "stroke:var(--gpt);stroke-width:1.5;stroke-dasharray:5 4" }, svg);
+      const k = m[key].toFixed(2);
+      seen[k] = seen[k] ? seen[k] + ", " + m.short : m.short;
+    });
+    Object.entries(seen).forEach(([v, names]) => {
+      s("text", { x: ml + 6, y: y(+v) - 6, "data-fam": "GPT", class: "fam-line", style: "fill:var(--gpt)" }, svg).textContent = names;
+    });
+    // family lines + points (base configs only)
+    ["Qwen", "Llama", "Mistral"].forEach(f => {
+      const pts = M.filter(m => m.fam === f && m.cfg === "base").sort((a, b) => a.p - b.p);
+      s("polyline", { points: pts.map(m => `${x(m.p)},${y(m[key])}`).join(" "), "data-fam": f, class: "fam-line", style: `fill:none;stroke:${FAMC[f]};stroke-width:2;opacity:.55` }, svg);
+      pts.forEach(m => {
+        const c = s("circle", { cx: x(m.p), cy: y(m[key]), r: 5, class: "pt", "data-id": m.id, "data-fam": f, style: `fill:${FAMC[f]};stroke:var(--surface);stroke-width:1.5` }, svg);
+        const hit = s("circle", { cx: x(m.p), cy: y(m[key]), r: 12, style: "fill:transparent;cursor:pointer", "data-fam": f, tabindex: 0, "aria-label": `${label(m)}: ${fmt(m[key])}` }, svg);
+        const on = e => { highlight(m.id, true); showTip(e, modelTip(m)); };
+        hit.addEventListener("pointerenter", on);
+        hit.addEventListener("pointermove", moveTip);
+        hit.addEventListener("pointerleave", () => { highlight(m.id, false); hideTip(); });
+        hit.addEventListener("focus", () => highlight(m.id, true));
+        hit.addEventListener("blur", () => highlight(m.id, false));
+      });
+    });
+  }
+  twin("twin-mcq", "mcq", 100, [0, 25, 50, 75, 100], v => v + "%", [93.8, 99.2, "3B+ spread: 5.4 pp"]);
+  twin("twin-fr", "fr", 5, [0, 1, 2, 3, 4, 5], v => String(v), [2.86, 4.52, "3B+ spread: 1.66 points"]);
+  buildLegend(document.getElementById("legend-twin"), applyFamFilter);
+
+  // topic x level distribution (Fig. 1)
+  const DIST = {
+    full: { rows: [["Arch. patterns", [20, 20, 15, 16]], ["Quality attributes", [11, 17, 12, 3]], ["Decomposition", [8, 10, 12, 3]], ["Cloud deployment", [9, 10, 11, 5]], ["Technical debt", [2, 3, 0, 1]]],
+      cap: "All 188 evaluated questions. 12 implement-level MCQs were excluded for a formatting defect." },
+    core: { rows: [["Arch. patterns", [16, 15, 2, 11]], ["Quality attributes", [7, 9, 7, 2]], ["Decomposition", [8, 9, 8, 2]], ["Cloud deployment", [8, 5, 2, 1]], ["Technical debt", [2, 2, 0, 0]]],
+      cap: "CAKE-Core: 116 questions (94 MCQ, 22 free response) where every expert rated clarity at least 4, mean correctness was at least 4.0, and nobody flagged ambiguity or typos." }
+  };
+  const distEl = document.getElementById("dist");
+  function renderDist(v) {
+    const d = DIST[v];
+    const cols = [0, 1, 2, 3].map(i => d.rows.reduce((a, r) => a + r[1][i], 0));
+    let html = `<thead><tr><th></th><th>Recall</th><th>Analyze</th><th>Design</th><th>Implement</th><th>Σ</th></tr></thead><tbody>`;
+    d.rows.forEach(([name, vals]) => {
+      html += `<tr><th scope="row">${name}</th>` + vals.map(n => {
+        const pct = Math.round(Math.min(1, n / 20) * 85);
+        const ink = pct > 50 ? "var(--on-accent)" : "var(--ink)";
+        return `<td><div class="c" style="background:color-mix(in oklab, var(--accent) ${pct}%, var(--soft));color:${ink}">${n}</div></td>`;
+      }).join("") + `<td class="tot">${vals.reduce((a, b) => a + b, 0)}</td></tr>`;
+    });
+    html += `</tbody><tfoot><tr><td></td>${cols.map(c => `<td>${c}</td>`).join("")}<td><b style="color:var(--ink)">${cols.reduce((a, b) => a + b, 0)}</b></td></tr></tfoot>`;
+    distEl.innerHTML = html;
+    document.getElementById("dist-cap").textContent = d.cap;
+  }
+  renderDist("full");
+  document.querySelectorAll("#benchmark .seg button").forEach(b => b.addEventListener("click", () => {
+    pressGroup(b.parentElement, b); renderDist(b.dataset.v);
+  }));
+
+  // quiz: real CAKE-Core items
+  const QUIZ = [
+    { lvl: "Recall", id: "Q001", topic: "architectural patterns", diff: "easy",
+      q: "What are the three states of a Circuit Breaker pattern?",
+      opts: ["Open, Closed, Half-Open", "Active, Inactive, Pending", "Running, Stopped, Paused", "Connected, Disconnected, Reconnecting"],
+      ans: "Open, Closed, Half-Open",
+      ex: "Closed is normal operation. Open blocks requests after failures pass a threshold. Half-Open tests whether the service has recovered." },
+    { lvl: "Analyze", id: "Q051", topic: "architectural patterns", diff: "medium",
+      q: "A team is experiencing cascading failures when one downstream service becomes slow. Requests pile up, exhausting thread pools. Which pattern combination would best address this?",
+      opts: ["Circuit Breaker with Timeout and Bulkhead", "Retry with increased timeout", "API Gateway with caching", "Database per Service with sharding"],
+      ans: "Circuit Breaker with Timeout and Bulkhead",
+      ex: "Circuit Breaker stops calling the failing service, Timeout prevents indefinite waiting, and Bulkhead isolates resources so one dependency cannot exhaust every thread." },
+    { lvl: "Design", id: "Q113", topic: "quality attributes", diff: "medium",
+      q: "Design a disaster recovery strategy for a critical financial application. Requirements: RTO of 4 hours, RPO of 15 minutes, budget constraints prevent active-active in multiple regions. Which approach best fits?",
+      opts: ["Warm standby in secondary region with continuous replication and automated failover", "Daily backups to another region", "Active-active multi-region deployment", "Cold standby with weekly backups"],
+      ans: "Warm standby in secondary region with continuous replication and automated failover",
+      ex: "Warm standby meets the 4-hour RTO and continuous replication meets the 15-minute RPO, without the cost of active-active. Cold standby is too slow." },
+    { lvl: "Implement", id: "Q163", topic: "architectural patterns", diff: "hard", fr: true,
+      q: "Given this Saga orchestrator pseudocode, identify and fix the bug. What compensating transactions are missing?",
+      code: "class OrderSaga:\n    def execute(self):\n        try:\n            self.reserve_inventory()\n            self.charge_payment()\n            self.ship_order()\n        except PaymentError:\n            self.release_inventory()\n        except ShippingError:\n            self.refund_payment()",
+      ans: "The ShippingError handler must also release the inventory. When shipping fails, call release_inventory() and then refund_payment()." }
+  ];
+  const quizEl = document.getElementById("quiz");
+  const quizTabs = document.getElementById("quiz-tabs");
+  const shuffleBtn = document.getElementById("quiz-shuffle");
+  let qi = 0;
+  function shuffled(a) {
+    const r = a.slice();
+    for (let i = r.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [r[i], r[j]] = [r[j], r[i]]; }
+    return r;
+  }
+  function esc(t) { return t.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;"); }
+  function renderQuiz() {
+    const q = QUIZ[qi];
+    shuffleBtn.hidden = !!q.fr;
+    quizEl.innerHTML = `<div class="q-meta"><span>${q.id}</span><span>${q.lvl.toLowerCase()}</span><span>${q.topic}</span><span>${q.diff}</span><span>${q.fr ? "free response" : "multiple choice"}</span></div>
+      <p class="q-text">${esc(q.q)}</p>`;
+    if (q.fr) {
+      quizEl.appendChild(h("pre", { class: "code" }, esc(q.code)));
+      const foot = h("div", { class: "q-foot" });
+      const btn = h("button", { type: "button", class: "ghost" }, "Show the reference answer");
+      foot.appendChild(btn); quizEl.appendChild(foot);
+      btn.addEventListener("click", () => {
+        foot.remove();
+        quizEl.appendChild(h("div", { class: "reveal" }, `<p>${esc(q.ans)}</p><p class="note">The judge model reads the question, this reference and the model's answer, then returns one score from 0 to 5. Implement-level scores ranged from 1.36 to 4.54 across configurations.</p>`));
+      });
+      return;
+    }
+    const opts = h("div", { class: "opts", role: "group", "aria-label": "Answer options" });
+    const order = shuffled(q.opts);
+    const longest = q.opts.reduce((a, b) => b.length > a.length ? b : a);
+    order.forEach((o, i) => {
+      const b = h("button", { type: "button", class: "opt" }, `<span class="l">${"ABCD"[i]}</span><span>${esc(o)}</span>`);
+      b.addEventListener("click", () => {
+        opts.querySelectorAll(".opt").forEach((x, k) => {
+          x.disabled = true;
+          if (order[k] === q.ans) x.classList.add("right");
+        });
+        if (o !== q.ans) b.classList.add("wrong");
+        const isLongest = longest === q.ans;
+        quizEl.appendChild(h("div", { class: "reveal" },
+          `<p><b>${o === q.ans ? "Correct." : "Not quite."}</b> ${esc(q.ex)}</p>
+           <p class="note">${isLongest ? "The correct option here is also the longest one. The paper lists this pattern as a limitation, since a model could guess by length." : "Here the longest option is wrong, so guessing by length would fail. Across the benchmark, though, the correct option tends to be the longest."}</p>`));
+      });
+      opts.appendChild(b);
+    });
+    quizEl.appendChild(opts);
+  }
+  QUIZ.forEach((q, i) => {
+    const b = h("button", { type: "button", "aria-pressed": String(i === 0) }, q.lvl);
+    b.addEventListener("click", () => { qi = i; pressGroup(quizTabs, b); renderQuiz(); });
+    quizTabs.appendChild(b);
+  });
+  shuffleBtn.addEventListener("click", renderQuiz);
+  renderQuiz();
+
+  // leaderboard
+  const lb = document.getElementById("lb");
+  const COLS = [
+    { k: "name", t: "Model", sort: (a, b) => a.name.localeCompare(b.name) || a.cfg.localeCompare(b.cfg) },
+    { k: "cfg", t: "Config" },
+    { k: "p", t: "Params", r: true, sort: (a, b) => (a.p ?? 1e9) - (b.p ?? 1e9) },
+    { k: "fr", t: "Free response 0–5", r: true, sort: (a, b) => b.fr - a.fr },
+    { k: "mcq", t: "MCQ %", r: true, sort: (a, b) => b.mcq - a.mcq },
+    { k: "t", t: "s / q", r: true, sort: (a, b) => a.t - b.t }
+  ];
+  let sortKey = "fr";
+  function renderLB() {
+    const col = COLS.find(c => c.k === sortKey);
+    const rows = M.slice().sort((a, b) => col.sort(a, b) || b.fr - a.fr);
+    let html = "<thead><tr>" + COLS.map(c => {
+      const aria = c.k === sortKey ? ` aria-sort="${["mcq", "fr"].includes(c.k) ? "descending" : "ascending"}"` : "";
+      return `<th scope="col" class="${c.r ? "r" : ""}"${aria}>${c.sort ? `<button type="button" data-k="${c.k}">${c.t}${c.k === sortKey ? " ↓" : ""}</button>` : c.t}</th>`;
+    }).join("") + "</tr></thead><tbody>";
+    rows.forEach(m => {
+      html += `<tr style="--fc:${FAMC[m.fam]}">
+        <td><span class="name"><i></i>${m.name}</span></td>
+        <td><span class="cfg ${m.cfg !== "base" ? "aug" : ""}">${m.cfg}</span></td>
+        <td class="r mono">${m.p ? m.p + "B" : "—"}</td>
+        <td class="r fr-col"><span class="barcell"><span>${m.fr.toFixed(2)}</span><span class="track"><i style="width:${m.fr / 5 * 100}%"></i></span></span></td>
+        <td class="r mono muted">${m.mcq.toFixed(1)}</td>
+        <td class="r mono">${m.t.toFixed(1)}</td></tr>`;
+    });
+    lb.innerHTML = html + "</tbody>";
+    lb.querySelectorAll("thead button").forEach(b => b.addEventListener("click", () => {
+      sortKey = b.dataset.k; renderLB(); lb.querySelector(`thead button[data-k="${sortKey}"]`).focus();
+    }));
+  }
+  renderLB();
+
+  // speed vs quality
+  (function speed() {
+    const W = 720, H = 360, ml = 44, mr = 20, mt = 16, mb = 44;
+    const svg = document.getElementById("speed");
+    svg.setAttribute("viewBox", `0 0 ${W} ${H}`);
+    const lx0 = Math.log(0.75), lx1 = Math.log(12);
+    const x = t => ml + (Math.log(t) - lx0) / (lx1 - lx0) * (W - ml - mr);
+    const y0 = 1.5, y1 = 5;
+    const y = v => mt + (1 - (v - y0) / (y1 - y0)) * (H - mt - mb);
+    const g = s("g", { class: "grid" }, svg);
+    [2, 3, 4, 5].forEach(v => {
+      s("line", { x1: ml, x2: W - mr, y1: y(v), y2: y(v) }, g);
+      s("text", { x: ml - 8, y: y(v) + 4, "text-anchor": "end" }, svg).textContent = v;
+    });
+    [1, 2, 5, 10].forEach(t => {
+      s("line", { x1: x(t), x2: x(t), y1: mt, y2: H - mb }, g);
+      s("text", { x: x(t), y: H - mb + 18, "text-anchor": "middle" }, svg).textContent = t + " s";
+    });
+    s("text", { x: (ml + W - mr) / 2, y: H - 6, "text-anchor": "middle", class: "axis-title" }, svg).textContent = "Seconds per question (log scale) · faster to the left";
+    s("text", { x: ml, y: mt - 4, class: "axis-title" }, svg).textContent = "FR score";
+    const LABELS = { m14: [8, -8, "start"], g5: [-10, -8, "end"], m3: [8, 14, "start"], l3t: [8, 4, "start"], qc30: [-10, -8, "end"], m8: [-10, 4, "end"], l3x: [8, 4, "start"] };
+    M.forEach(m => {
+      const cx = x(m.t), cy = y(m.fr), col = FAMC[m.fam];
+      let mk;
+      if (m.cfg === "+tool") mk = s("rect", { x: cx - 5, y: cy - 5, width: 10, height: 10, class: "pt", style: `fill:var(--surface);stroke:${col};stroke-width:2` }, svg);
+      else if (m.cfg === "+think") mk = s("circle", { cx, cy, r: 5.5, class: "pt", style: `fill:var(--surface);stroke:${col};stroke-width:2` }, svg);
+      else mk = s("circle", { cx, cy, r: 5.5, class: "pt", style: `fill:${col};stroke:var(--surface);stroke-width:1.5` }, svg);
+      if (LABELS[m.id]) {
+        const [dx, dy, anc] = LABELS[m.id];
+        s("text", { x: cx + dx, y: cy + dy, "text-anchor": anc, style: "fill:var(--ink)" }, svg).textContent = label(m);
+      }
+      const hit = s("circle", { cx, cy, r: 11, style: "fill:transparent;cursor:pointer", tabindex: 0, "aria-label": `${label(m)}: ${m.fr} at ${m.t} s` }, svg);
+      hit.addEventListener("pointerenter", e => { mk.classList.add("hl"); showTip(e, modelTip(m)); });
+      hit.addEventListener("pointermove", moveTip);
+      hit.addEventListener("pointerleave", () => { mk.classList.remove("hl"); hideTip(); });
+    });
+  })();
+
+  // ranked bars per level
+  const LEVELS = [
+    { k: "an", t: "Analyze", range: "2.00 – 4.75" },
+    { k: "de", t: "Design", range: "1.31 – 4.31" },
+    { k: "im", t: "Implement", range: "1.36 – 4.54" },
+    { k: "fr", t: "Overall", range: "1.71 – 4.52" }
+  ];
+  const ranked = document.getElementById("ranked");
+  const RH = 28;
+  ranked.style.height = M.length * RH + "px";
+  const rowEls = {};
+  M.forEach(m => {
+    const r = h("div", { class: "rrow" + (m.cfg === "+tool" ? " tool" : ""), style: `--fc:${FAMC[m.fam]}` },
+      `<span class="nm" title="${label(m)}"><span class="rk"></span>${m.short}${m.cfg !== "base" ? ` <em>${m.cfg}</em>` : ""}</span><span class="tr"><i></i></span><span class="vl"></span>`);
+    ranked.appendChild(r); rowEls[m.id] = r;
+  });
+  function renderRanked(lv) {
+    const rows = M.slice().sort((a, b) => b[lv.k] - a[lv.k] || b.fr - a.fr);
+    rows.forEach((m, i) => {
+      const r = rowEls[m.id];
+      r.style.transform = `translateY(${i * RH}px)`;
+      r.querySelector(".tr i").style.width = (m[lv.k] / 5 * 100) + "%";
+      r.querySelector(".vl").textContent = lv.k === "fr" ? m.fr.toFixed(2) : m[lv.k].toFixed(1);
+      r.querySelector(".rk").textContent = String(i + 1).padStart(2, "0");
+    });
+    document.getElementById("level-range").innerHTML = `${lv.t} range <b>${lv.range}</b>`;
+  }
+  const levelTabs = document.getElementById("level-tabs");
+  LEVELS.forEach((lv, i) => {
+    const b = h("button", { type: "button", "aria-pressed": String(i === 2) }, lv.t);
+    b.addEventListener("click", () => { pressGroup(levelTabs, b); renderRanked(lv); });
+    levelTabs.appendChild(b);
+  });
+  renderRanked(LEVELS[2]);
+
+  // augmentation deltas
+  const AUG = [
+    ["l1t", "l1"], ["l3t", "l3"], ["l8t", "l8"], ["m3t", "m3"], null, ["l1x", "l1"], ["l3x", "l3"], ["l8x", "l8"]
+  ];
+  const augEl = document.getElementById("aug");
+  augEl.innerHTML = `<span></span><span class="hd">MCQ change (pp)</span><span class="hd">FR change (points)</span>`;
+  function dv(val, max, fmt, tool, fam) {
+    const w = Math.abs(val) / max * 50;
+    const pos = val >= 0;
+    const bar = val === 0 ? "" : `<i style="${pos ? "left:50%" : "right:50%"};width:${w}%"></i>`;
+    const lab = `<span style="${pos ? `left:calc(50% + ${w}% + 6px)` : `right:calc(50% + ${w}% + 6px)`}">${fmt(val)}</span>`;
+    return `<div class="dv${tool ? " tool" : ""}" style="--fc:${FAMC[fam]}">${bar}${lab}</div>`;
+  }
+  const sign = (v, d) => (v > 0 ? "+" : v < 0 ? "−" : "±") + Math.abs(v).toFixed(d);
+  AUG.forEach(pair => {
+    if (!pair) { augEl.insertAdjacentHTML("beforeend", `<div class="sep"></div>`); return; }
+    const a = byId[pair[0]], b = byId[pair[1]];
+    const dm = +(a.mcq - b.mcq).toFixed(1), df = +(a.fr - b.fr).toFixed(2);
+    const tool = a.cfg === "+tool";
+    augEl.insertAdjacentHTML("beforeend",
+      `<span class="nm">${a.short}<em>${a.cfg}</em></span>${dv(dm, 60, v => sign(v, 1), tool, a.fam)}${dv(df, 1.25, v => sign(v, 2), tool, a.fam)}`);
+  });
+  augEl.insertAdjacentHTML("beforeend", `<span></span><div class="scale"><span>−60</span><span>0</span><span>+60</span></div><div class="scale"><span>−1.25</span><span>0</span><span>+1.25</span></div>`);
+
+  // topic heatmap
+  const heatEl = document.getElementById("heat");
+  const TOPICS = ["Arch.<br>patterns", "Quality<br>attrs.", "Decom&shy;position", "Cloud<br>deploy.", "Tech.<br>debt"];
+  function renderHeat(f) {
+    const mcq = f === "mcq";
+    let html = `<thead><tr><th></th>${TOPICS.map(t => `<th scope="col">${t}</th>`).join("")}</tr></thead><tbody>`;
+    let last = null;
+    M.forEach(m => {
+      if (m.fam !== last) {
+        if (last) html += `<tr class="gap"><td colspan="6"></td></tr>`;
+        html += `<tr><th></th><td colspan="5" class="fam" style="color:${FAMC[m.fam]}">${m.fam}</td></tr>`;
+        last = m.fam;
+      }
+      const vals = TOPIC[m.id][mcq ? 0 : 1];
+      html += `<tr><th scope="row">${label(m)}</th>` + vals.map(v => {
+        const frac = mcq ? v / 100 : v / 5;
+        const pct = Math.round(frac * 100);
+        const ink = pct > 58 ? "var(--on-accent)" : "var(--ink)";
+        return `<td><div class="c" style="background:color-mix(in oklab, var(--accent) ${pct}%, var(--surface));color:${ink}">${mcq ? v : v.toFixed(1)}</div></td>`;
+      }).join("") + "</tr>";
+    });
+    heatEl.innerHTML = html + "</tbody>";
+    document.getElementById("heat-lo").textContent = mcq ? "0%" : "0";
+    document.getElementById("heat-hi").textContent = mcq ? "100%" : "5";
+  }
+  renderHeat("fr");
+
+  // results view tabs
+  const resTabs = document.getElementById("res-tabs");
+  resTabs.querySelectorAll("button").forEach(b => b.addEventListener("click", () => {
+    pressGroup(resTabs, b);
+    resTabs.querySelectorAll("button").forEach(x => { document.getElementById(x.dataset.p).hidden = x !== b; });
+  }));
+  document.querySelectorAll("#heat-tabs button").forEach(b => b.addEventListener("click", () => {
+    pressGroup(b.parentElement, b); renderHeat(b.dataset.f);
+  }));
+
+  // CAKE-Core delta strip
+  (function core() {
+    const W = 420, H = 96, ml = 14, mr = 14, mid = 40;
+    const svg = document.getElementById("core");
+    svg.setAttribute("viewBox", `0 0 ${W} ${H}`);
+    const x = v => ml + (v + 5) / 10 * (W - ml - mr);
+    const g = s("g", { class: "grid" }, svg);
+    [-4, -2, 0, 2, 4].forEach(v => {
+      s("line", { x1: x(v), x2: x(v), y1: 10, y2: 70, style: v === 0 ? "stroke:var(--ink);opacity:.6" : "" }, g);
+      s("text", { x: x(v), y: 86, "text-anchor": "middle" }, svg).textContent = (v > 0 ? "+" : v < 0 ? "−" : "") + Math.abs(v) + " pp";
+    });
+    // stack dots that share a rounded position so none overlap
+    const slots = {};
+    M.slice().sort((a, b) => CORE[a.id] - CORE[b.id]).forEach(m => {
+      const v = CORE[m.id], key = Math.round(v * 2);
+      const n = slots[key] = (slots[key] || 0) + 1;
+      const cy = mid + (n % 2 ? -1 : 1) * Math.floor(n / 2) * 11;
+      const c = s("circle", { cx: x(v), cy, r: 5, class: "pt", style: `fill:${FAMC[m.fam]};stroke:var(--surface);stroke-width:1.2` }, svg);
+      const hit = s("circle", { cx: x(v), cy, r: 8, style: "fill:transparent;cursor:pointer", tabindex: 0, "aria-label": `${label(m)}: ${sign(v, 1)} pp` }, svg);
+      hit.addEventListener("pointerenter", e => { c.classList.add("hl"); showTip(e, `<b>${label(m)}</b><br>Full ${m.mcq.toFixed(1)}% → Core ${(m.mcq + v).toFixed(1)}%<br>${sign(v, 1)} pp`); });
+      hit.addEventListener("pointermove", moveTip);
+      hit.addEventListener("pointerleave", () => { c.classList.remove("hl"); hideTip(); });
+    });
+  })();
+
+  // copy bibtex
+  const copyBtn = document.getElementById("copy-bib");
+  copyBtn.addEventListener("click", () => {
+    const text = document.getElementById("bib").textContent;
+    const done = msg => { copyBtn.textContent = msg; setTimeout(() => { copyBtn.textContent = "Copy"; }, 1600); };
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(text).then(() => done("Copied"), () => { selectBib(); done("Press ⌘C"); });
+    } else { selectBib(); done("Press ⌘C"); }
+  });
+  function selectBib() {
+    const r = document.createRange(); r.selectNodeContents(document.getElementById("bib"));
+    const sel = window.getSelection(); sel.removeAllRanges(); sel.addRange(r);
+  }
+})();
+</script>
+</body>
+</html>
