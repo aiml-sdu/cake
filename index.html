@@ -256,7 +256,9 @@ table { border-collapse: collapse; width: 100%; }
 .q-foot { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; }
 .ghost { font-family: var(--f-mono); font-size: 0.78rem; background: transparent; color: var(--ink); border: 1px solid var(--rule); border-radius: 7px; padding: 7px 12px; cursor: pointer; }
 .ghost:hover { border-color: var(--ink); }
-.reveal { max-width: 760px; border-left: 3px solid var(--accent); padding: 4px 0 4px 16px; display: grid; gap: 8px; }
+.reveal { max-width: 760px; border-left: 3px solid var(--muted); padding: 4px 0 4px 16px; display: grid; gap: 8px; }
+.reveal.ok { border-left-color: var(--llama); }
+.reveal.bad { border-left-color: var(--accent); }
 .reveal p { font-size: 0.98rem; }
 .reveal .note { font-size: 0.88rem; color: var(--muted); }
 pre.code {
@@ -1007,7 +1009,7 @@ footer .wrap { display: flex; flex-wrap: wrap; gap: 8px 24px; justify-content: s
         });
         if (o !== q.ans) b.classList.add("wrong");
         const isLongest = longest === q.ans;
-        quizEl.appendChild(h("div", { class: "reveal" },
+        quizEl.appendChild(h("div", { class: "reveal " + (o === q.ans ? "ok" : "bad") },
           `<p><b>${o === q.ans ? "Correct." : "Not quite."}</b> ${esc(q.ex)}</p>
            <p class="note">${isLongest ? "The correct option here is also the longest one. The paper lists this pattern as a limitation, since a model could guess by length." : "Here the longest option is wrong, so guessing by length would fail. Across the benchmark, though, the correct option tends to be the longest."}</p>`));
       });
